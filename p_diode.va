@@ -1,0 +1,93 @@
+`include "disciplines.vams"
+`include "constants.vams"
+
+module diode_rr(n1, n2,disp1,disp2,disp3,disp4,disp5,disp6,disp7);
+  inout n1, n2,disp1,disp2,disp3,disp4,disp5,disp6,disp7;
+  electrical n1, n2, nx, m, gndi,disp1,disp2,disp3,disp4,disp5,disp6,disp7;
+  branch (disp1) br_disp1;
+  branch (disp2) br_disp2;
+  branch (disp3) br_disp3;
+  branch (disp4) br_disp4;
+  branch (disp5) br_disp5;
+  branch (disp6) br_disp6;
+  branch (disp7) br_disp7;
+  parameter real n0   = 1.0;      
+  parameter real tau  = 3e-5;        
+  parameter real Temp = 300.0;    
+  parameter real q    = 1.602e-19;
+  parameter real k    = 1.381e-23;
+  parameter real R    = 50;
+  parameter real epsilon_Si = 1.044772e-12;  
+  parameter real A    = 1e-2;      
+  parameter real Na   = 1e19;           
+  parameter real Nd   = 1e15; 
+  parameter real ni   = 1e10;
+  parameter real M    = 0.5; 
+  parameter real d    = 50e-5;
+  parameter real pi0  = 1e10;
+  parameter real u_min  = 65;
+  parameter real u_max  = 1330;
+  parameter real Nref   = 8.5e16;
+  parameter real alpha  = 0.72;
+
+  real Vt, un, up, qE, qM, C, R1, Vbi, Qj, Cj0, ul, ui, Dn, Dp, Da, TM, Is, Wc, xnc, xpc, Vbr_c, Epeak, W, xn, xp, Ec, Vbr, dEx, Ea ;
+  
+  analog begin
+
+    V(gndi)<+0;
+    Vt = k * Temp / q;
+    V(nx,n2)<+I(nx,n2)*R;
+    
+    un=((u_max-u_min)/(1+pow((Nd/Nref),alpha)))+u_min;
+   
+    up=un;
+    Dn=un*Vt;
+    Dp=up*Vt;
+    Da=((un*Dp)+(up*Dn))/(un+up);
+    
+    TM=2*(pow(d,2)/4*Da);
+    Is=(q*A*2*d*pi0)/tau;
+    
+    R1=tau/(TM+tau);
+    C=TM;
+    
+    qE = (tau * Is) * (exp(V(n1,nx) / (n0 * Vt)) - 1);
+    
+    //Subcircuit:
+    I(gndi,m) <+ qE;                 
+    I(m,gndi) <+ V(m,gndi) / R1;              
+    I(m,gndi) <+ ddt(C*V(m,gndi));         
+    qM = V(m,gndi);
+    
+    //Junction capacitance:  
+    Vbi=Vt*ln(Na*Nd/pow(ni,2));
+    Cj0 = (epsilon_Si*A)/(pow(2*epsilon_Si*((1/Na)+(1/Nd))*Vbi/q,0.5));
+    Qj = (Cj0*Vbi*(1-(pow(1-(V(n1,nx)/Vbi),1-M))))/(1-M) ;
+    
+    I(n1,nx) <+ (qE - qM) / TM;
+    I(n1,nx) <+ ddt(Qj);     
+    
+    //Breakdown
+    Ec=4e5/(1-(0.333)*(log(Nd/1e16)));
+    xnc=Ec*epsilon_Si/(q*Nd);
+    xpc=Ec*epsilon_Si/(q*Na);
+    Wc=xnc+xpc;
+    Vbr_c=Ec*Wc/2;
+    
+    dEx=q*Nd/epsilon_Si;
+    Ea=Ec-(dEx*d);
+    
+    if (d<xnc)
+        Vbr=((Ec+Ea)*d/2)+((xpc*Ec)/2);
+    else 
+        Vbr=Ec*Wc/2;
+        
+    I(br_disp1) <+ (qE - qM)/ TM ;
+    I(br_disp2) <+ Vbi  ; 
+    I(br_disp3) <+ Cj0 ; 
+    I(br_disp4) <+ Wc;
+    I(br_disp5) <+ Ec;
+    I(br_disp6) <+ TM;
+    I(br_disp7) <+ Vbr;
+  end
+endmodule
