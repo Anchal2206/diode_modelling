@@ -1,0 +1,40 @@
+﻿Simulation Steps for Diode Reverse Recovery and Breakdown Analysis
+==================================================================
+
+1. Compile the Verilog-A file (`.va`) using the chosen simulator and check for any syntactical errors.
+
+2. Open a new schematic window within the simulation environment.
+
+3. Navigate to the Components section and select the compiled C++ model from the Devices library.
+
+4. Load the compiled `.va` file to define the device model to be simulated.
+
+5. Construct the circuit by placing:
+      - A voltage source (DC or Pulse)
+      - Voltage and current probes
+      - Ground connection
+      - Necessary wiring between components
+
+6. Set up a DC Sweep simulation:
+      - Use this to plot the diode's I-V characteristic (current vs. voltage)
+
+7. Set up a Transient simulation:
+      - Use a rectangular voltage pulse input
+      - Observe reverse recovery current characteristics over time
+      - Analyze diode storage and transition behavior
+
+8. Perform a Parameter Sweep along with Transient simulation:
+      - Vary intrinsic layer thickness (`d`) and doping concentration (`Nd`)
+      - Measure and compare breakdown voltage (`Vbr`) under different conditions
+
+9. Export graph data as `.csv` files:
+      - Plot `Vbr vs. Nd` and `Vbr vs. d` using external tools (e.g., Python/Excel)
+
+10. Repeat parameter sweep to analyze Transit Time variation:
+        - Plot `Transit Time vs. Nd` and `Transit Time vs. d` for comparative study
+
+Notes:
+=====
+- Ensure pulse width, rise/fall times, and biasing are configured according to the desired time resolution.
+- Simulation accuracy depends on timestep settings and model parameter tuning.
+- Use plotting tools within the simulator or export data for external analysis.
